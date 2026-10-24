@@ -3,9 +3,6 @@
 [![Claude Code skill](https://img.shields.io/badge/Claude_Code-skill-D97757)](https://docs.claude.com/en/docs/claude-code/skills)
 [![Platform: macOS | Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)](#tools-covered)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)](skills/model-cache-cleaner/scripts)
-[![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen)](skills/model-cache-cleaner/scripts)
-[![Tools covered: 14](https://img.shields.io/badge/tools_covered-14-blue)](#tools-covered)
-[![Deletes to Trash](https://img.shields.io/badge/deletes-to_Trash-orange)](#safety)
 
 A Claude skill that finds the storage local AI tools use on your machine, shows you everything it found, and moves to the Trash only what you pick and approve.
 
