@@ -106,4 +106,4 @@ Or ask Claude: "add <tool> to model-cache-cleaner". The skill knows how to fill 
 
 ## Licence
 
-To be decided. MIT is proposed.
+[MIT](LICENSE)
