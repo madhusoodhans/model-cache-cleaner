@@ -104,8 +104,6 @@ Or ask Claude: "add <tool> to model-cache-cleaner". The skill knows how to fill 
 - Each tool's "Never delete" list is respected, for example chat history and login tokens.
 - It never uses `sudo`.
 
-See [PROPOSAL.md](PROPOSAL.md) for background and roadmap.
-
 ## Licence
 
 To be decided. MIT is proposed.
