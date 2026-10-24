@@ -1,6 +1,13 @@
 # model-cache-cleaner
 
-A Claude skill that finds the storage local AI tools use on your machine, shows you everything it found, and deletes only what you pick.
+[![Claude Code skill](https://img.shields.io/badge/Claude_Code-skill-D97757)](https://docs.claude.com/en/docs/claude-code/skills)
+[![Platform: macOS | Linux](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey)](#tools-covered)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)](skills/model-cache-cleaner/scripts)
+[![Dependencies: none](https://img.shields.io/badge/dependencies-none-brightgreen)](skills/model-cache-cleaner/scripts)
+[![Tools covered: 14](https://img.shields.io/badge/tools_covered-14-blue)](#tools-covered)
+[![Deletes to Trash](https://img.shields.io/badge/deletes-to_Trash-orange)](#safety)
+
+A Claude skill that finds the storage local AI tools use on your machine, shows you everything it found, and moves to the Trash only what you pick and approve.
 
 If you try local models, your disk fills up in places you never see: `~/.cache/lm-studio`, `~/.cache/huggingface`, `~/.ollama`, `~/.omlx`, `~/Library/Containers/...`. Finder hides them, and macOS calls them "System Data". The same model often gets downloaded by three different tools.
 
@@ -14,7 +21,8 @@ If you try local models, your disk fills up in places you never see: `~/.cache/l
    - **re-download:** individual models you can get back by downloading again.
    - **inspect:** app data. Look before deleting.
 4. **You pick.** Reply with numbers, for example "1, 2, 4-7".
-5. **Delete and report.** Only what you picked, using each tool's own cleanup method where it has one. Then free space before and after.
+5. **You review.** You see the exact paths, sizes and what happens after. Nothing moves until you say yes.
+6. **Move to Trash and report.** Picked items go to the Trash, so you can restore them with Put Back until you empty it. Tools with their own cleanup command (such as `ollama rm`) use that instead.
 
 ## Example
 
@@ -33,14 +41,19 @@ cp -r skills/model-cache-cleaner ~/.claude/skills/
 
 Then ask Claude "my disk is full, where did my space go?" or "clean up my local AI models".
 
-## Run the scanner on its own
+## Run the scripts on their own
 
-It needs Python 3 and nothing else. It never deletes anything.
+They need Python 3 and nothing else.
 
 ```bash
+# Scan (read-only)
 python3 -I skills/model-cache-cleaner/scripts/scan.py             # table
 python3 -I skills/model-cache-cleaner/scripts/scan.py --json      # JSON
 python3 -I skills/model-cache-cleaner/scripts/scan.py --no-dupes  # faster
+
+# Move to Trash (check with --dry-run first)
+python3 -I skills/model-cache-cleaner/scripts/trash.py --dry-run ~/.omlx/cache
+python3 -I skills/model-cache-cleaner/scripts/trash.py ~/.omlx/cache
 ```
 
 ## Tools covered
@@ -87,7 +100,9 @@ Or ask Claude: "add <tool> to model-cache-cleaner". The skill knows how to fill 
 ## Safety
 
 - The scanner only reads.
-- Nothing is deleted until you pick it by number, and anything risky or large gets a final confirmation.
+- Nothing moves until you pick it by number **and** approve the exact list of paths. The review step is never skipped.
+- Items go to the Trash, not `rm -rf`, so they can be restored until you empty it. Space is freed when the Trash is emptied.
+- The trash script refuses the home folder, user folders, paths outside home and symlinks, whatever it's told.
 - User folders (Documents, Desktop, Downloads, Pictures, Movies, Music) are never suggested.
 - Each tool's "Never delete" list is respected, for example chat history and login tokens.
 - It never uses `sudo`.

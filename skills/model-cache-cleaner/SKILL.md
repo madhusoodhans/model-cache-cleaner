@@ -1,6 +1,6 @@
 ---
 name: model-cache-cleaner
-description: Scan the machine for storage used by local AI tools (LM Studio, Ollama, Hugging Face, MLX tools, Jan, Unsloth, PyTorch, pip, uv and others), show the raw results and a numbered list of suggested deletions, let the user pick what to remove, then remove only that. Use when the user says their disk or laptop is full, asks where their storage went, wants to clean up models or caches, or wants to add a new AI tool to the cleaner.
+description: Scan the machine for storage used by local AI tools (LM Studio, Ollama, Hugging Face, MLX tools, Jan, Unsloth, PyTorch, pip, uv and others), show the raw results and a numbered list of suggested deletions, let the user pick and review what to remove, then move only that to the Trash. Use when the user says their disk or laptop is full, asks where their storage went, wants to clean up models or caches, or wants to add a new AI tool to the cleaner.
 ---
 
 # model-cache-cleaner
@@ -13,6 +13,7 @@ Show the user where local AI tools are using their disk, suggest what could go, 
 model-cache-cleaner/
 ├── SKILL.md            # this file
 ├── scripts/scan.py     # read-only scanner
+├── scripts/trash.py    # moves approved paths to the Trash, with guard rails
 └── tools/
     ├── _template/TOOL.md
     └── <tool-id>/TOOL.md   # one per tool: paths, kinds, and how to clean it
@@ -71,34 +72,50 @@ End with the total that could be freed by each group, then ask:
 
 Stop and wait. Do not delete anything in this step.
 
-### 4. Delete what the user picked
+### 4. Review: always, before anything moves
 
-For each picked number:
+For the picked numbers:
 
-1. Read the tool's `TOOL.md` (the path is in the tool's `doc` field). Follow its "Never delete" and "How to clean" sections.
-2. If the tool's "How to clean" says to quit the app first, or to use its own command (for example `ollama rm` or `hf cache delete`), do that instead of `rm -rf`.
-3. Before deleting, repeat back the exact list of paths, with sizes and the total. If the pick includes anything from `inspect`, or more than about 20 GB, wait for a final yes.
-4. Delete exact paths only, showing each size in the same command:
+1. Read each tool's `TOOL.md` (the path is in the tool's `doc` field). Follow its "Never delete" and "How to clean" sections. If it says to quit the app first or to use the tool's own command (for example `ollama rm` or `hf cache delete`), plan for that.
+2. Run a dry run with the exact paths:
    ```bash
-   du -sh "<path>" && rm -rf "<path>"
+   python3 -I <skill-dir>/scripts/trash.py --dry-run "<path1>" "<path2>"
    ```
-   Never use wildcards, never use `sudo`, and never touch system folders.
+3. Show the user a review table: each path, its size, the tool, the method (Trash or the tool's own command), and what happens after (rebuilt, re-downloaded, lost). Show the total.
+4. Ask: "Move these to the Trash? (yes / change the list)". **Stop and wait.** Continue only on an explicit yes to this exact list. If the user changes the list, run the dry run and show the review again.
 
-### 5. Report
+This review step is never skipped, whatever the size or risk, and even if the user said "delete all" earlier.
 
-Run `df -h /` again. Show:
-- A table of what was deleted, with sizes.
-- Free space before and after.
+### 5. Move to Trash
+
+After the user says yes:
+
+- For items whose `TOOL.md` names a cleanup command, run that command. These commands delete directly, so say so in the review.
+- Move everything else to the Trash with the bundled script:
+  ```bash
+  python3 -I <skill-dir>/scripts/trash.py "<path1>" "<path2>"
+  ```
+  It uses macOS's built-in `trash` command (Finder's Put Back works), or the freedesktop Trash on Linux. It refuses the home folder, user folders, paths outside home and symlinks.
+
+Never use `rm -rf` on picked items. Never use wildcards, `sudo`, or system folders. If the script refuses a path, tell the user why. Don't work around the refusal.
+
+### 6. Report
+
+Show:
+- A table of what was moved to the Trash or removed by a tool command, with sizes.
+- That the space is freed only after the Trash is emptied (on macOS, Finder → Empty Trash). Items can be restored with Put Back until then. Don't empty the Trash yourself unless the user explicitly asks.
+- Free space before and after (`df -h /`). Note that space from items in the Trash won't show until it's emptied.
 - What will be re-downloaded on next use.
 - The largest remaining suggestions, in case the user wants to go further.
 
 ## Safety rules
 
-1. Delete only numbers or paths the user picked in this conversation.
-2. Never delete or suggest deleting user folders: Documents, Desktop, Downloads, Pictures, Movies, Music.
-3. Never delete a single file from inside an app's bundle or model folder. Delete the whole model or bundle, or use the tool's own command.
-4. If a pick is ambiguous ("delete the cache"), and more than one path could match, ask which.
-5. Follow each tool's "Never delete" list even when the user picked its parent folder. Remove the allowed contents and say what was kept.
+1. Move only numbers or paths the user picked in this conversation, and only after they've said yes to the review in step 4.
+2. Move to the Trash with `scripts/trash.py`. Never `rm -rf`.
+3. Never delete or suggest deleting user folders: Documents, Desktop, Downloads, Pictures, Movies, Music.
+4. Never delete a single file from inside an app's bundle or model folder. Delete the whole model or bundle, or use the tool's own command.
+5. If a pick is ambiguous ("delete the cache"), and more than one path could match, ask which.
+6. Follow each tool's "Never delete" list even when the user picked its parent folder. Remove the allowed contents and say what was kept.
 
 ## Adding a tool
 

@@ -46,8 +46,9 @@ An open-source **Claude skill** published on GitHub. The user says "my disk is f
    - `re-download`: individual models, listed one by one, that cost a download to get back.
    - `inspect`: app data; look before deleting.
 4. **The user picks.** They reply with numbers ("1, 2, 4-7", "all safe"). The tool never decides for them.
-5. **Delete.** Remove only the picked items. Follow that tool's own instructions, and prefer its cleanup command (`ollama rm`, `uv cache clean`, `hf cache delete`) over `rm -rf`.
-6. **Report.** Show what was removed, free space before and after, and what will be re-downloaded on next use.
+5. **Review.** Show the exact paths, sizes and consequences from a dry run. Nothing moves until the user says yes to that exact list. This step is never skipped.
+6. **Move to Trash.** Move only the approved items to the Trash, so they're recoverable until it's emptied. Where a tool has its own cleanup command (`ollama rm`, `hf cache delete`), use that instead. `rm -rf` is never used.
+7. **Report.** Show what was moved, that space is freed when the Trash is emptied, and what will be re-downloaded on next use.
 
 ### Generic and extensible by design
 
@@ -114,14 +115,15 @@ The script only reads. It never deletes. Deletion happens only in the skill's co
 
 These are hard rules in `SKILL.md`:
 
-1. Delete only what the user picked, and confirm again before anything in `inspect` or anything over about 20 GB.
-2. Never suggest deleting `user` folders (Documents, Pictures, Movies, Desktop). Suggest moving them to other storage instead.
-3. Always show a folder's size and contents before proposing to delete it.
-4. Prefer the tool's own cleanup command over `rm -rf`.
-5. Warn before deleting the only copy of a model, and say how large the re-download would be.
-6. Never use `sudo`, and never touch system folders.
-7. Read the tool's `TOOL.md` before deleting from it, and respect its "Never delete" list.
-8. Never delete a single file from inside an app bundle or model folder.
+1. Move only what the user picked, after they approve a dry-run review of the exact paths. Every time.
+2. Move to the Trash (`scripts/trash.py`), never `rm -rf`. The script refuses the home folder, user folders, paths outside home and symlinks.
+3. Never suggest deleting `user` folders (Documents, Desktop, Downloads, Pictures, Movies, Music). Suggest moving them to other storage instead.
+4. Always show a folder's size and contents before proposing to delete it.
+5. Prefer the tool's own cleanup command where it has one, and say in the review that it deletes directly.
+6. Warn before deleting the only copy of a model, and say how large the re-download would be.
+7. Never use `sudo`, and never touch system folders.
+8. Read the tool's `TOOL.md` before deleting from it, and respect its "Never delete" list.
+9. Never delete a single file from inside an app bundle or model folder.
 
 ## 7. Scope
 
@@ -139,15 +141,41 @@ These are hard rules in `SKILL.md`:
 
 ## 8. Competition and differentiation
 
-**This needs checking before launch.** We haven't yet searched GitHub, the Claude skills directories or Homebrew for something similar.
+Checked on 2026-10-24. The space is new and crowded, but nobody leads it yet. Every AI-specific project found had 0 or 1 GitHub stars, and most were created in the previous few weeks.
 
-Known neighbours:
+**AI storage cleaners:**
 
-- General disk tools: DaisyDisk, GrandPerspective, OmniDiskSweeper, `ncdu`, `dust`. They show sizes but don't know which AI folders are caches.
-- Built-in tool commands: `hf cache scan`, `ollama list`, `uv cache dir`. Each covers one tool only.
-- Cleaner apps: CleanMyMac and similar. These are closed, generic and not aware of models.
+| Project | Type | Closest overlap |
+|---|---|---|
+| [LLMDoctor](https://github.com/Arthur031221/llm-doctor) | Python CLI | Dedupes weights across Ollama, LM Studio, Hugging Face and MLX; finds orphan Ollama blobs and old Hugging Face revisions |
+| [macreaper](https://github.com/roopen219/macreaper) | Bun CLI, macOS | 21+ developer cache categories, tool-native cleanup, moves to Trash |
+| [ai-disk-cleaner](https://github.com/nethero23/ai-disk-cleaner) | Tauri app, Windows | Ollama, Hugging Face, LM Studio, pip, conda, Docker; pick and undo |
+| [cleanator](https://github.com/blackberrylabs/cleanator) | Rust CLI, Linux | Never deletes; writes a cleanup script to review |
+| [llm-mem-cleaner](https://github.com/jasonhuzhensheng/llm-mem-cleaner) | macOS menu bar app | Mainly memory and GPU; has a disk tab |
 
-The difference: model-cache-cleaner spans every tool at once, knows which folders are caches and which are models, lists models one by one, finds duplicates across tools, and lets the user pick before anything is deleted.
+**Claude skills:**
+- [upkeep](https://github.com/KyleNesium/upkeep) is a general Mac disk audit and package updater.
+- [disk-cleanup-skill](https://github.com/HappyLy-61/disk-cleanup-skill) is Chinese-language, with a data/ML role and a staging folder.
+
+**Wider neighbours:**
+- General disk tools (DaisyDisk, GrandPerspective, `ncdu`, `dust`) show sizes but don't know which AI folders are caches.
+- Built-in commands (`hf cache scan`, `ollama list`, `uv cache dir`) each cover one tool.
+- Cleaner apps (CleanMyMac and similar) are closed and not aware of models.
+
+**Where model-cache-cleaner differs:**
+1. **It's Claude-native.** It can investigate folders it doesn't recognise, instead of following fixed rules only.
+2. **Tools are added as Markdown files.** Each `TOOL.md` holds both the scanner config and the guidance. No code change is needed.
+3. **It covers Mac MLX tools.** oMLX, MTPLX, mlx-serve, Private LLM, AI Edge Gallery and the Claude desktop VM images aren't covered elsewhere.
+4. **It lists models one by one,** with numbered picks and a mandatory review.
+
+**Ideas taken from neighbours:**
+- Move to Trash instead of deleting (macreaper). This is done.
+
+**Still to consider:**
+- Old Hugging Face revisions and orphan Ollama blobs (LLMDoctor).
+- A dry-run mode that writes a reviewable script (cleanator).
+
+Position it as "the extensible, Claude-native cleaner with Mac MLX coverage", not as the first of its kind.
 
 ## 9. Milestones
 
