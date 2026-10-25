@@ -14,12 +14,14 @@ If you try local models, your disk fills up in places you never see: `~/.cache/l
 2. **Show the raw results.** Largest folders, AI tools found with their sizes, and duplicate files.
 3. **Suggest.** A numbered list of deletions, grouped by risk:
    - **safe:** caches, rebuilt automatically.
-   - **duplicate:** a second copy of the same file.
+   - **duplicate:** a byte-identical second copy of the same file.
    - **re-download:** individual models you can get back by downloading again.
    - **inspect:** app data. Look before deleting.
 4. **You pick.** Reply with numbers, for example "1, 2, 4-7".
 5. **You review.** You see the exact paths, sizes and what happens after. Nothing moves until you say yes.
 6. **Move to Trash and report.** Picked items go to the Trash, so you can restore them with Put Back until you empty it. Tools with their own cleanup command (such as `ollama rm`) use that instead.
+
+Models with similar names are never treated as duplicates. `Qwen3.6-35B-A3B-4bit` (MLX) and `Qwen3.6-35B-A3B-MTP-GGUF` share a base model, but they differ in quantization, format and variant, so they differ in quality, speed and memory use. Which ones to keep is your call. Only byte-identical files are flagged as duplicates.
 
 ## Example
 
@@ -33,8 +35,17 @@ Run afterwards, the scanner found 19 more suggestions, including:
 ## Install
 
 ```bash
-cp -r skills/model-cache-cleaner ~/.claude/skills/
+git clone https://github.com/madhusoodhans/model-cache-cleaner.git
+cp -r model-cache-cleaner/skills/model-cache-cleaner ~/.claude/skills/
 ```
+
+To stay up to date with `git pull`, link the skill instead of copying it:
+
+```bash
+ln -s "$PWD/model-cache-cleaner/skills/model-cache-cleaner" ~/.claude/skills/model-cache-cleaner
+```
+
+After updating, start a new Claude session (or run `/clear`). A session that's already running keeps the version it loaded.
 
 Then ask Claude "my disk is full, where did my space go?" or "clean up my local AI models".
 
