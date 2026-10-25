@@ -66,6 +66,8 @@ Don't offer unknown folders for deletion unless the user asks about one.
 
 Show the numbered `suggestions` grouped by risk, in the scanner's order. Include number, size, path, tool and what happens after deletion. Show `duplicates` notes under their suggestion.
 
+**Never call two models the same, or suggest that one makes another redundant, because their names match.** A different quantization (4-bit and 8-bit, Q4_K_M and Q8_0, GPTQ, QAT), format (GGUF and MLX), variant (MTP, speed-optimised, instruct and base) or fine-tune is a different model, with different quality, speed and memory use. Only the scanner's `duplicates`, which are byte-identical files, count as duplicates. If you mention that two models share a base model, say how they differ, and leave the choice to the user. Don't recommend keeping one.
+
 End with the total that could be freed by each group, then ask:
 
 > Which numbers should I delete? (for example "1, 2, 4-7", "all safe", or "none")
@@ -115,7 +117,8 @@ Show:
 3. Never delete or suggest deleting user folders: Documents, Desktop, Downloads, Pictures, Movies, Music.
 4. Never delete a single file from inside an app's bundle or model folder. Delete the whole model or bundle, or use the tool's own command.
 5. If a pick is ambiguous ("delete the cache"), and more than one path could match, ask which.
-6. Follow each tool's "Never delete" list even when the user picked its parent folder. Remove the allowed contents and say what was kept.
+6. Models with similar names are different models unless the scanner found them byte-identical. Never suggest that one replaces another.
+7. Follow each tool's "Never delete" list even when the user picked its parent folder. Remove the allowed contents and say what was kept.
 
 ## Adding a tool
 
